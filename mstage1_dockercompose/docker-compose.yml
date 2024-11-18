@@ -1,0 +1,80 @@
+version: '3.8'
+
+x-common-variables: &common-variable
+  env_file: .env
+  networks:
+    - devops-server-network
+
+services:
+  postgresBD:
+    <<: *common-variable
+    image: postgres:16.2
+    restart: unless-stopped
+    ports:
+      - "5433:5433"
+    volumes:
+      - ./services/database/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgresBD:/var/lib/postgresBD/data
+
+
+# запаковать образы и отправить в  docker registry
+# дописать docke-compose файл начания с postgres
+# учитывать переменные в en файле
+
+# настроить pgAdmin посмотреть БД
+  # pgadmin:
+  #   container_name: pgadmin_container
+  #   image: dpage/pgadmin4:7.2
+  #   environment:
+  #     PGADMIN_DEFAULT_EMAIL: "habrpguser@habr.com"
+  #     PGADMIN_DEFAULT_PASSWORD: "pgadminpwd4habr"
+  #     PGADMIN_CONFIG_SERVER_MODE: "False"
+  #   volumes:
+  #     - pgadmin-data:/var/lib/pgadmin
+  #   ports:
+  #     - "5050:80"
+  #   restart: unless-stopped
+  #   deploy:
+  #     resources:
+  #       limits:
+  #         cpus: '0.5'
+  #         memory: 1G
+  #   networks:
+  #     - postgres
+  
+
+
+
+
+# # Stage 1: Сборка приложения
+# FROM maven:3.8.4-jdk-8 AS build
+# # Устанавливаем рабочую директорию
+# WORKDIR /app
+# # Копируем файлы сборки
+# COPY .mvn .mvn
+# COPY mvnw pom.xml ./
+# RUN mvn -B dependency:go-offline
+# # Копируем исходный код
+# COPY src ./src
+# # Собираем приложение
+# RUN mvn -B package -DskipTests
+# # Stage 2: Запуск приложения в отдельном контейнере
+# FROM openjdk:8-jdk-alpine
+# # Копируем собранное приложение из предыдущего стейджа
+# COPY --from=build /app/target/*.jar /app/app.jar
+# # Ожидаем, пока база данных PostgreSQL будет доступна
+# RUN apk add --no-cache bash
+# COPY wait-for-it.sh .
+# RUN chmod +x wait-for-it.sh
+# # Открываем порт для внешнего доступа
+# EXPOSE 8083
+# # Запускаем приложение
+# CMD ["./wait-for-it.sh", "postgres:5432", "--", "java", "-jar", "/app/app.jar"]
+
+networks:
+  devops-server-network:
+    # driver: overlay
+    # attachable: true
+
+volumes:
+  postgresBD:
