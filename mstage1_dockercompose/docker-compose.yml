@@ -11,12 +11,24 @@ services:
     image: postgres:16.2
     restart: unless-stopped
     ports:
-      - "5433:5433"
+      - "5432:5432"
     volumes:
       - ./services/database/init.sql:/docker-entrypoint-initdb.d/init.sql
       - postgresBD:/var/lib/postgresBD/data
 
+  rabbitMQ:
+    <<: *common-variable
+    image: rabbitmq:3-management-alpine
+    hostname: rabbitMQ
+    restart: unless-stopped
+    ports:
+      - "15672:15672"
 
+  booking-service:
+    <<: *common-variable
+    image: .
+  
+  
 # запаковать образы и отправить в  docker registry
 # дописать docke-compose файл начания с postgres
 # учитывать переменные в en файле
